@@ -1,76 +1,211 @@
-#include <stdio.h> // Inclui biblioteca padrão de entrada e saída
-#include <stdlib.h> // Inclui funções de alocação de memória e conversão
-#include <string.h> // Inclui funções para manipulação de strings
+#include <stdio.h> // inclui stdio
+#include <stdlib.h> // inclui stdlib
+#include <string.h> // inclui string
+#include <stdbool.h> // inclui bool
 
-#define MAX 100 // Define o tamanho máximo da fila
+#define MAX 100 // define tamanho máximo
+
+// ----------- Exercício 1: Fila de Atendimento -----------
+typedef struct {
+    char nome[50]; // nome do cliente
+} Cliente;
 
 typedef struct {
-    char documents[MAX][50]; // Vetor de strings para armazenar os nomes dos documentos
-    int front;               // Índice do início da fila
-    int rear;                // Índice do final da fila
-} PrinterQueue;
+    Cliente clientes[MAX]; // vetor de clientes
+    int front, rear; // índices da fila
+} FilaAtendimento;
 
-// Inicializa a fila
-void initQueue(PrinterQueue *q) {
-    q->front = -1; // Define o início como -1 (fila vazia)
-    q->rear = -1;  // Define o final como -1 (fila vazia)
-}
+void initFilaAtendimento(FilaAtendimento *f) { f->front = f->rear = -1; } // inicializa fila
+bool isEmptyAtendimento(FilaAtendimento *f) { return f->front == -1; } // verifica vazia
+bool isFullAtendimento(FilaAtendimento *f) { return (f->rear + 1) % MAX == f->front; } // verifica cheia
 
-// Verifica se a fila está cheia
-int isFull(PrinterQueue *q) {
-    return (q->rear + 1) % MAX == q->front; // Retorna verdadeiro se o próximo do rear for o front (fila cheia)
-}
-
-// Verifica se a fila está vazia
-int isEmpty(PrinterQueue *q) {
-    return q->front == -1; // Retorna verdadeiro se o início for -1 (fila vazia)
-}
-
-// Adiciona um documento na fila
-void enqueue(PrinterQueue *q, const char *document) {
-    if (isFull(q)) { // Se a fila está cheia
-        printf("Fila cheia. Não é possível adicionar o documento: %s\n", document); // Mensagem de erro
+void enfileirarCliente(FilaAtendimento *f, const char *nome) { // adiciona cliente
+    if (isFullAtendimento(f)) {
+        printf("Fila cheia!\n");
         return;
     }
-    if (isEmpty(q)) { // Se a fila está vazia
-        q->front = 0; // Define o início como 0
-    }
-    q->rear = (q->rear + 1) % MAX; // Atualiza o final da fila (circular)
-    strcpy(q->documents[q->rear], document); // Copia o nome do documento para a posição correta
+    if (isEmptyAtendimento(f)) f->front = 0;
+    f->rear = (f->rear + 1) % MAX;
+    strcpy(f->clientes[f->rear].nome, nome);
 }
 
-// Remove um documento da fila (imprime)
-void dequeue(PrinterQueue *q) {
-    if (isEmpty(q)) { // Se a fila está vazia
-        printf("Fila vazia. Nenhum documento para imprimir.\n"); // Mensagem de erro
+void atenderCliente(FilaAtendimento *f) { // atende cliente
+    if (isEmptyAtendimento(f)) {
+        printf("Nenhum cliente para atender.\n");
         return;
     }
-    printf("Imprimindo documento: %s\n", q->documents[q->front]); // Mostra o documento que está sendo impresso
-    if (q->front == q->rear) { // Se só tem um elemento na fila
-        q->front = -1; // Reseta o início
-        q->rear = -1;  // Reseta o final
-    } else {
-        q->front = (q->front + 1) % MAX; // Avança o início da fila (circular)
+    printf("Atendendo: %s\n", f->clientes[f->front].nome);
+    if (f->front == f->rear) f->front = f->rear = -1;
+    else f->front = (f->front + 1) % MAX;
+}
+
+void teste_fila_atendimento() { // teste fila de atendimento
+    FilaAtendimento f;
+    initFilaAtendimento(&f);
+    enfileirarCliente(&f, "Ana");
+    enfileirarCliente(&f, "Bruno");
+    enfileirarCliente(&f, "Carlos");
+    atenderCliente(&f);
+    atenderCliente(&f);
+    atenderCliente(&f);
+    atenderCliente(&f);
+}
+
+// ----------- Exercício 2: Palíndromo com Pilha e Fila -----------
+typedef struct {
+    char itens[MAX]; // pilha de char
+    int topo;
+} PilhaChar;
+
+typedef struct {
+    char itens[MAX]; // fila de char
+    int front, rear;
+} FilaChar;
+
+void initPilha(PilhaChar *p) { p->topo = -1; } // inicializa pilha
+void push(PilhaChar *p, char c) { if (p->topo < MAX-1) p->itens[++(p->topo)] = c; } // empilha
+char pop(PilhaChar *p) { return p->topo >= 0 ? p->itens[(p->topo)--] : '\0'; } // desempilha
+
+void initFila(FilaChar *f) { f->front = f->rear = -1; } // inicializa fila
+void enfileirar(FilaChar *f, char c) { // enfileira char
+    if ((f->rear + 1) % MAX == f->front) return;
+    if (f->front == -1) f->front = 0;
+    f->rear = (f->rear + 1) % MAX;
+    f->itens[f->rear] = c;
+}
+char desenfileirar(FilaChar *f) { // desenfileira char
+    if (f->front == -1) return '\0';
+    char c = f->itens[f->front];
+    if (f->front == f->rear) f->front = f->rear = -1;
+    else f->front = (f->front + 1) % MAX;
+    return c;
+}
+
+bool verifica_palindromo(const char *palavra) { // verifica palíndromo
+    PilhaChar p; FilaChar f;
+    initPilha(&p); initFila(&f);
+    int len = strlen(palavra);
+    for (int i = 0; i < len; i++) {
+        push(&p, palavra[i]);
+        enfileirar(&f, palavra[i]);
     }
+    for (int i = 0; i < len; i++) {
+        if (pop(&p) != desenfileirar(&f)) return false;
+    }
+    return true;
 }
 
-// Função para imprimir o próximo documento (chama o dequeue)
-void printNext(PrinterQueue *q) {
-    dequeue(q); // Remove e imprime o próximo documento da fila
+void teste_palindromo() { // teste palíndromo
+    printf("arara: %s\n", verifica_palindromo("arara") ? "Palindromo" : "Nao eh palindromo");
+    printf("banana: %s\n", verifica_palindromo("banana") ? "Palindromo" : "Nao eh palindromo");
 }
 
-int main() {
-    PrinterQueue pq; // Declara uma fila de impressora
-    initQueue(&pq);  // Inicializa a fila
+// ----------- Exercício 3: Fila Circular -----------
+typedef struct {
+    int dados[MAX]; // fila circular de int
+    int front, rear;
+} FilaCircular;
 
-    enqueue(&pq, "Documento1"); // Adiciona "Documento1" na fila
-    enqueue(&pq, "Documento2"); // Adiciona "Documento2" na fila
-    enqueue(&pq, "Documento3"); // Adiciona "Documento3" na fila
+void initFilaCircular(FilaCircular *f) { f->front = f->rear = -1; } // inicializa fila circular
+bool isEmptyCircular(FilaCircular *f) { return f->front == -1; } // verifica vazia
+bool isFullCircular(FilaCircular *f) { return (f->rear + 1) % MAX == f->front; } // verifica cheia
 
-    printNext(&pq); // Imprime o próximo documento ("Documento1")
-    printNext(&pq); // Imprime o próximo documento ("Documento2")
-    printNext(&pq); // Imprime o próximo documento ("Documento3")
-    printNext(&pq); // Tenta imprimir de uma fila vazia (mensagem de erro)
+void enfileirarCircular(FilaCircular *f, int valor) { // enfileira circular
+    if (isFullCircular(f)) {
+        printf("Fila circular cheia!\n");
+        return;
+    }
+    if (isEmptyCircular(f)) f->front = 0;
+    f->rear = (f->rear + 1) % MAX;
+    f->dados[f->rear] = valor;
+}
 
-    return 0; // Retorna 0 indicando que o programa terminou com sucesso
+int desenfileirarCircular(FilaCircular *f) { // desenfileira circular
+    if (isEmptyCircular(f)) {
+        printf("Fila circular vazia!\n");
+        return -1;
+    }
+    int valor = f->dados[f->front];
+    if (f->front == f->rear) f->front = f->rear = -1;
+    else f->front = (f->front + 1) % MAX;
+    return valor;
+}
+
+void teste_fila_circular() { // teste fila circular
+    FilaCircular f;
+    initFilaCircular(&f);
+    enfileirarCircular(&f, 10);
+    enfileirarCircular(&f, 20);
+    enfileirarCircular(&f, 30);
+    printf("Saiu: %d\n", desenfileirarCircular(&f));
+    printf("Saiu: %d\n", desenfileirarCircular(&f));
+    enfileirarCircular(&f, 40);
+    printf("Saiu: %d\n", desenfileirarCircular(&f));
+    printf("Saiu: %d\n", desenfileirarCircular(&f));
+}
+
+// ----------- Exercício 4: Simulação de Impressora -----------
+typedef struct {
+    char nome[50]; // nome do documento
+    int paginas;   // número de páginas
+} Documento;
+
+typedef struct {
+    Documento docs[MAX]; // fila de documentos
+    int front, rear;
+} FilaImpressora;
+
+void initFilaImpressora(FilaImpressora *f) { f->front = f->rear = -1; } // inicializa impressora
+bool isEmptyImpressora(FilaImpressora *f) { return f->front == -1; } // verifica vazia
+bool isFullImpressora(FilaImpressora *f) { return (f->rear + 1) % MAX == f->front; } // verifica cheia
+
+void adicionarDocumento(FilaImpressora *f, const char *nome, int paginas) { // adiciona doc
+    if (isFullImpressora(f)) {
+        printf("Fila de impressao cheia!\n");
+        return;
+    }
+    if (isEmptyImpressora(f)) f->front = 0;
+    f->rear = (f->rear + 1) % MAX;
+    strcpy(f->docs[f->rear].nome, nome);
+    f->docs[f->rear].paginas = paginas;
+}
+
+void imprimirProximo(FilaImpressora *f) { // imprime doc
+    if (isEmptyImpressora(f)) {
+        printf("Nenhum documento para imprimir.\n");
+        return;
+    }
+    printf("Imprimindo: %s (%d paginas)\n", f->docs[f->front].nome, f->docs[f->front].paginas);
+    if (f->front == f->rear) f->front = f->rear = -1;
+    else f->front = (f->front + 1) % MAX;
+}
+
+void teste_impressora() { // teste impressora
+    FilaImpressora f;
+    initFilaImpressora(&f);
+    adicionarDocumento(&f, "Trabalho1.pdf", 5);
+    adicionarDocumento(&f, "Relatorio.docx", 2);
+    imprimirProximo(&f);
+    imprimirProximo(&f);
+    imprimirProximo(&f);
+}
+
+int main() { // main com testes
+    // Exercício 1
+    printf("Fila de Atendimento:\n");
+    teste_fila_atendimento();
+
+    // Exercício 2
+    printf("\nVerificacao de Palindromo:\n");
+    teste_palindromo();
+
+    // Exercício 3
+    printf("\nFila Circular:\n");
+    teste_fila_circular();
+
+    // Exercício 4
+    printf("\nSimulacao de Impressora:\n");
+    teste_impressora();
+
+    return 0;
 }

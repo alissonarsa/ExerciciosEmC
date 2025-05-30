@@ -5,207 +5,185 @@
 
 #define MAX 100 // define tamanho máximo
 
-// ----------- Exercício 1: Fila de Atendimento -----------
-typedef struct {
-    char nome[50]; // nome do cliente
-} Cliente;
-
-typedef struct {
-    Cliente clientes[MAX]; // vetor de clientes
-    int front, rear; // índices da fila
-} FilaAtendimento;
-
-void initFilaAtendimento(FilaAtendimento *f) { f->front = f->rear = -1; } // inicializa fila
-bool isEmptyAtendimento(FilaAtendimento *f) { return f->front == -1; } // verifica vazia
-bool isFullAtendimento(FilaAtendimento *f) { return (f->rear + 1) % MAX == f->front; } // verifica cheia
-
-void enfileirarCliente(FilaAtendimento *f, const char *nome) { // adiciona cliente
-    if (isFullAtendimento(f)) {
-        printf("Fila cheia!\n");
-        return;
-    }
-    if (isEmptyAtendimento(f)) f->front = 0;
-    f->rear = (f->rear + 1) % MAX;
-    strcpy(f->clientes[f->rear].nome, nome);
-}
-
-void atenderCliente(FilaAtendimento *f) { // atende cliente
-    if (isEmptyAtendimento(f)) {
-        printf("Nenhum cliente para atender.\n");
-        return;
-    }
-    printf("Atendendo: %s\n", f->clientes[f->front].nome);
-    if (f->front == f->rear) f->front = f->rear = -1;
-    else f->front = (f->front + 1) % MAX;
-}
-
-void teste_fila_atendimento() { // teste fila de atendimento
-    FilaAtendimento f;
-    initFilaAtendimento(&f);
-    enfileirarCliente(&f, "Ana");
-    enfileirarCliente(&f, "Bruno");
-    enfileirarCliente(&f, "Carlos");
-    atenderCliente(&f);
-    atenderCliente(&f);
-    atenderCliente(&f);
-    atenderCliente(&f);
-}
-
-// ----------- Exercício 2: Palíndromo com Pilha e Fila -----------
+// ----------- Exercício 1: Inversão de String com Pilha -----------
 typedef struct {
     char itens[MAX]; // pilha de char
     int topo;
 } PilhaChar;
 
-typedef struct {
-    char itens[MAX]; // fila de char
-    int front, rear;
-} FilaChar;
-
 void initPilha(PilhaChar *p) { p->topo = -1; } // inicializa pilha
 void push(PilhaChar *p, char c) { if (p->topo < MAX-1) p->itens[++(p->topo)] = c; } // empilha
 char pop(PilhaChar *p) { return p->topo >= 0 ? p->itens[(p->topo)--] : '\0'; } // desempilha
 
-void initFila(FilaChar *f) { f->front = f->rear = -1; } // inicializa fila
-void enfileirar(FilaChar *f, char c) { // enfileira char
-    if ((f->rear + 1) % MAX == f->front) return;
-    if (f->front == -1) f->front = 0;
-    f->rear = (f->rear + 1) % MAX;
-    f->itens[f->rear] = c;
-}
-char desenfileirar(FilaChar *f) { // desenfileira char
-    if (f->front == -1) return '\0';
-    char c = f->itens[f->front];
-    if (f->front == f->rear) f->front = f->rear = -1;
-    else f->front = (f->front + 1) % MAX;
-    return c;
+void inverter_string(const char *str, char *saida) { // inverte string usando pilha
+    PilhaChar p;
+    initPilha(&p);
+    int len = strlen(str);
+    for (int i = 0; i < len; i++) push(&p, str[i]);
+    for (int i = 0; i < len; i++) saida[i] = pop(&p);
+    saida[len] = '\0';
 }
 
-bool verifica_palindromo(const char *palavra) { // verifica palíndromo
-    PilhaChar p; FilaChar f;
-    initPilha(&p); initFila(&f);
-    int len = strlen(palavra);
-    for (int i = 0; i < len; i++) {
-        push(&p, palavra[i]);
-        enfileirar(&f, palavra[i]);
-    }
-    for (int i = 0; i < len; i++) {
-        if (pop(&p) != desenfileirar(&f)) return false;
-    }
-    return true;
+void teste_inverter_string() { // teste inversão de string
+    char palavra[] = "Python";
+    char invertida[MAX];
+    inverter_string(palavra, invertida);
+    printf("Invertida: %s\n", invertida); // deve mostrar "nohtyP"
 }
 
-void teste_palindromo() { // teste palíndromo
-    printf("arara: %s\n", verifica_palindromo("arara") ? "Palindromo" : "Nao eh palindromo");
-    printf("banana: %s\n", verifica_palindromo("banana") ? "Palindromo" : "Nao eh palindromo");
-}
-
-// ----------- Exercício 3: Fila Circular -----------
+// ----------- Exercício 2: Verificação de Parênteses Balanceados -----------
 typedef struct {
-    int dados[MAX]; // fila circular de int
-    int front, rear;
-} FilaCircular;
+    char itens[MAX];
+    int topo;
+} PilhaPar;
 
-void initFilaCircular(FilaCircular *f) { f->front = f->rear = -1; } // inicializa fila circular
-bool isEmptyCircular(FilaCircular *f) { return f->front == -1; } // verifica vazia
-bool isFullCircular(FilaCircular *f) { return (f->rear + 1) % MAX == f->front; } // verifica cheia
+void initPilhaPar(PilhaPar *p) { p->topo = -1; }
+void pushPar(PilhaPar *p, char c) { if (p->topo < MAX-1) p->itens[++(p->topo)] = c; }
+char popPar(PilhaPar *p) { return p->topo >= 0 ? p->itens[(p->topo)--] : '\0'; }
+char topoPar(PilhaPar *p) { return p->topo >= 0 ? p->itens[p->topo] : '\0'; }
 
-void enfileirarCircular(FilaCircular *f, int valor) { // enfileira circular
-    if (isFullCircular(f)) {
-        printf("Fila circular cheia!\n");
+bool verifica_balanceamento(const char *expr) { // verifica parênteses, colchetes e chaves
+    PilhaPar p;
+    initPilhaPar(&p);
+    for (int i = 0; expr[i] != '\0'; i++) {
+        char c = expr[i];
+        if (c == '(' || c == '[' || c == '{') pushPar(&p, c);
+        else if (c == ')' || c == ']' || c == '}') {
+            if (p.topo == -1) return false;
+            char topo = popPar(&p);
+            if ((c == ')' && topo != '(') ||
+                (c == ']' && topo != '[') ||
+                (c == '}' && topo != '{')) return false;
+        }
+    }
+    return p.topo == -1;
+}
+
+void teste_balanceamento() { // teste balanceamento
+    printf("{[()]}: %s\n", verifica_balanceamento("{[()]}") ? "Balanceado" : "Nao balanceado");
+    printf("{[(])}: %s\n", verifica_balanceamento("{[(])}") ? "Balanceado" : "Nao balanceado");
+}
+
+// ----------- Exercício 3: Conversão Decimal para Binário -----------
+typedef struct {
+    char itens[MAX];
+    int topo;
+} PilhaBin;
+
+void initPilhaBin(PilhaBin *p) { p->topo = -1; }
+void pushBin(PilhaBin *p, char c) { if (p->topo < MAX-1) p->itens[++(p->topo)] = c; }
+char popBin(PilhaBin *p) { return p->topo >= 0 ? p->itens[(p->topo)--] : '\0'; }
+
+void decimal_para_binario(int n, char *saida) { // converte decimal para binário
+    PilhaBin p;
+    initPilhaBin(&p);
+    if (n == 0) {
+        saida[0] = '0';
+        saida[1] = '\0';
         return;
     }
-    if (isEmptyCircular(f)) f->front = 0;
-    f->rear = (f->rear + 1) % MAX;
-    f->dados[f->rear] = valor;
-}
-
-int desenfileirarCircular(FilaCircular *f) { // desenfileira circular
-    if (isEmptyCircular(f)) {
-        printf("Fila circular vazia!\n");
-        return -1;
+    while (n > 0) {
+        pushBin(&p, (n % 2) + '0');
+        n /= 2;
     }
-    int valor = f->dados[f->front];
-    if (f->front == f->rear) f->front = f->rear = -1;
-    else f->front = (f->front + 1) % MAX;
-    return valor;
+    int i = 0;
+    while (p.topo != -1) saida[i++] = popBin(&p);
+    saida[i] = '\0';
 }
 
-void teste_fila_circular() { // teste fila circular
-    FilaCircular f;
-    initFilaCircular(&f);
-    enfileirarCircular(&f, 10);
-    enfileirarCircular(&f, 20);
-    enfileirarCircular(&f, 30);
-    printf("Saiu: %d\n", desenfileirarCircular(&f));
-    printf("Saiu: %d\n", desenfileirarCircular(&f));
-    enfileirarCircular(&f, 40);
-    printf("Saiu: %d\n", desenfileirarCircular(&f));
-    printf("Saiu: %d\n", desenfileirarCircular(&f));
+void teste_decimal_para_binario() { // teste binário
+    char bin[MAX];
+    decimal_para_binario(10, bin);
+    printf("Binario de 10: %s\n", bin); // deve mostrar "1010"
 }
 
-// ----------- Exercício 4: Simulação de Impressora -----------
+// ----------- Exercício 4: Desfazer Operações (Undo) -----------
 typedef struct {
-    char nome[50]; // nome do documento
-    int paginas;   // número de páginas
-} Documento;
+    char acoes[MAX][50];
+    int topo;
+} PilhaUndo;
 
-typedef struct {
-    Documento docs[MAX]; // fila de documentos
-    int front, rear;
-} FilaImpressora;
-
-void initFilaImpressora(FilaImpressora *f) { f->front = f->rear = -1; } // inicializa impressora
-bool isEmptyImpressora(FilaImpressora *f) { return f->front == -1; } // verifica vazia
-bool isFullImpressora(FilaImpressora *f) { return (f->rear + 1) % MAX == f->front; } // verifica cheia
-
-void adicionarDocumento(FilaImpressora *f, const char *nome, int paginas) { // adiciona doc
-    if (isFullImpressora(f)) {
-        printf("Fila de impressao cheia!\n");
+void initPilhaUndo(PilhaUndo *p) { p->topo = -1; }
+void pushUndo(PilhaUndo *p, const char *acao) { if (p->topo < MAX-1) strcpy(p->acoes[++(p->topo)], acao); }
+void desfazer(PilhaUndo *p) {
+    if (p->topo == -1) {
+        printf("Nada para desfazer.\n");
         return;
     }
-    if (isEmptyImpressora(f)) f->front = 0;
-    f->rear = (f->rear + 1) % MAX;
-    strcpy(f->docs[f->rear].nome, nome);
-    f->docs[f->rear].paginas = paginas;
+    printf("Desfeito: %s\n", p->acoes[p->topo--]);
 }
 
-void imprimirProximo(FilaImpressora *f) { // imprime doc
-    if (isEmptyImpressora(f)) {
-        printf("Nenhum documento para imprimir.\n");
-        return;
+void teste_undo() { // teste undo
+    PilhaUndo p;
+    initPilhaUndo(&p);
+    pushUndo(&p, "Escreveu A");
+    pushUndo(&p, "Escreveu B");
+    pushUndo(&p, "Apagou C");
+    desfazer(&p);
+    desfazer(&p);
+    desfazer(&p);
+    desfazer(&p);
+}
+
+// ----------- Exercício 5: Avaliação de Expressão Pós-fixa -----------
+typedef struct {
+    int itens[MAX];
+    int topo;
+} PilhaInt;
+
+void initPilhaInt(PilhaInt *p) { p->topo = -1; }
+void pushInt(PilhaInt *p, int v) { if (p->topo < MAX-1) p->itens[++(p->topo)] = v; }
+int popInt(PilhaInt *p) { return p->topo >= 0 ? p->itens[(p->topo)--] : 0; }
+
+int avaliar_posfixa(const char *expr) { // avalia expressão pós-fixa
+    PilhaInt p;
+    initPilhaInt(&p);
+    char copia[200];
+    strcpy(copia, expr);
+    char *token = strtok(copia, " ");
+    while (token) {
+        if (token[0] >= '0' && token[0] <= '9') {
+            pushInt(&p, atoi(token));
+        } else {
+            int b = popInt(&p);
+            int a = popInt(&p);
+            switch (token[0]) {
+                case '+': pushInt(&p, a + b); break;
+                case '-': pushInt(&p, a - b); break;
+                case '*': pushInt(&p, a * b); break;
+                case '/': pushInt(&p, a / b); break;
+            }
+        }
+        token = strtok(NULL, " ");
     }
-    printf("Imprimindo: %s (%d paginas)\n", f->docs[f->front].nome, f->docs[f->front].paginas);
-    if (f->front == f->rear) f->front = f->rear = -1;
-    else f->front = (f->front + 1) % MAX;
+    return popInt(&p);
 }
 
-void teste_impressora() { // teste impressora
-    FilaImpressora f;
-    initFilaImpressora(&f);
-    adicionarDocumento(&f, "Trabalho1.pdf", 5);
-    adicionarDocumento(&f, "Relatorio.docx", 2);
-    imprimirProximo(&f);
-    imprimirProximo(&f);
-    imprimirProximo(&f);
+void teste_posfixa() { // teste pós-fixa
+    printf("2 3 + = %d\n", avaliar_posfixa("2 3 +")); // 5
+    printf("2 3 + 4 * = %d\n", avaliar_posfixa("2 3 + 4 *")); // 20
 }
 
-int main() { // main com testes
+int main() {
     // Exercício 1
-    printf("Fila de Atendimento:\n");
-    teste_fila_atendimento();
+    printf("Inversão de String:\n");
+    teste_inverter_string();
 
     // Exercício 2
-    printf("\nVerificacao de Palindromo:\n");
-    teste_palindromo();
+    printf("\nBalanceamento de Parênteses:\n");
+    teste_balanceamento();
 
     // Exercício 3
-    printf("\nFila Circular:\n");
-    teste_fila_circular();
+    printf("\nDecimal para Binário:\n");
+    teste_decimal_para_binario();
 
     // Exercício 4
-    printf("\nSimulacao de Impressora:\n");
-    teste_impressora();
+    printf("\nDesfazer Operações:\n");
+    teste_undo();
+
+    // Exercício 5
+    printf("\nExpressão Pós-fixa:\n");
+    teste_posfixa();
 
     return 0;
 }
